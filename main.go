@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
 )
@@ -25,7 +25,7 @@ func readConfig(filePath string) (*Config, error) {
 	}
 	defer file.Close()
 
-	byteValue, err := ioutil.ReadAll(file)
+	byteValue, err := io.ReadAll(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %v", err)
 	}
@@ -39,14 +39,9 @@ func readConfig(filePath string) (*Config, error) {
 	return &config, nil
 }
 
-func addRegistryEntries() error {
-	commands := []string{
-		`reg add "HKLM\SOFTWARE\WOW6432Node\Tanium\Tanium Client\Sensor Data\Tags" /v NonDomainJoined /t REG_SZ /d "Added via Custom Installer NDJ-NC-PAC-1"`,
-		`reg add "HKLM\SOFTWARE\WOW6432Node\Tanium\Tanium Client\Sensor Data\Tags" /v NonCorporate /t REG_SZ /d "Added via Custom Installer NDJ-NC-PAC-1"`,
-		`reg add "HKLM\SOFTWARE\WOW6432Node\Tanium\Tanium Client\Sensor Data\Tags" /v PacApts /t REG_SZ /d "Added via Custom Installer NDJ-NC-PAC-1"`,
-	}
-
-	for _, cmdStr := range commands {
+func addRegistryEntries(cfg Config) error {
+	for _, tag := range cfg.CustomTags {
+		cmdStr := fmt.Sprintf(`reg add "HKLM\SOFTWARE\WOW6432Node\Tanium\Tanium Client\Sensor Data\Tags" /v %s /t REG_SZ /d "%s"`, tag.Name, tag.Description)
 		cmd := exec.Command("cmd", "/c", cmdStr)
 		output, err := cmd.CombinedOutput()
 		if err != nil {
@@ -70,7 +65,7 @@ func main() {
 		fmt.Printf("Tag Name: %s, Description: %s\n", tag.Name, tag.Description)
 	}
 
-	err2 := addRegistryEntries()
+	err2 := addRegistryEntries(*config)
 	if err2 != nil {
 		fmt.Printf("Error: %v\n", err)
 	} else {
