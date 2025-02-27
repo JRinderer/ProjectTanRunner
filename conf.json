@@ -13,5 +13,6 @@
       "description": "This is a test of a custom installer for tanium"
     }
   ],
-  "location_init_file": "C:\\Program Files\\Tanium\\Tanium Client\\TaniumClient.ini"
+  "location_init_file": "C:\\Program Files\\Tanium\\Tanium Client\\TaniumClient.ini",
+  "TaniumInstallerName": "SetupClient.exe"
 }

@@ -16,6 +16,7 @@ type CustomTag struct {
 type Config struct {
 	CustomTags       []CustomTag `json:"custom_tags"`
 	LocationInitFile string      `json:"location_init_file"`
+	TaniumInstaller  string      `json:"TaniumInstallerName"`
 }
 
 func readConfig(filePath string) (*Config, error) {
@@ -40,29 +41,46 @@ func readConfig(filePath string) (*Config, error) {
 }
 
 func addRegistryEntries(cfg Config) error {
+	fmt.Println("Starting")
 	for _, tag := range cfg.CustomTags {
-		cmdStr := fmt.Sprintf(`reg add "HKLM\SOFTWARE\WOW6432Node\Tanium\Tanium Client\Sensor Data\Tags" /v %s /t REG_SZ /d "%s"`, tag.Name, tag.Description)
-		cmd := exec.Command("cmd", "/c", cmdStr)
+		//cmdStr := fmt.Sprintf(`reg add "HKLM\SOFTWARE\WOW6432Node\Tanium\Tanium Client\Sensor Data\Tags" /v %s /t REG_SZ /d "%s"`, tag.Name, tag.Description)
+		//cmdStr := fmt.Sprintf(`reg add / "HKLM\SOFTWARE\WOW6432Node\Python\PyLauncher" /v %s /t REG_SZ /d "%s"`, tag.Name, tag.Description)
+		fmt.Println("Adding custom tag %s\n", tag.Name)
+		cmd := exec.Command("reg", "add", `HKLM\SOFTWARE\WOW6432Node\Tanium\Tanium Client\Sensor Data\Tags`, "/v", tag.Name, "/t", "REG_SZ", "/d", tag.Description)
+
+		//cmd := exec.Command("cmd", "/c", cmdStr)
 		output, err := cmd.CombinedOutput()
+		fmt.Println(string(output))
 		if err != nil {
-			return fmt.Errorf("failed to execute command: %s, output: %s, error: %v", cmdStr, output, err)
+			return fmt.Errorf("failed to execute command: %s, output: %s, error: %v", "registry", output, err)
 		}
 	}
 
 	return nil
 }
 
-func main() {
-
-	config, err := readConfig("conf.json")
+func runeExe(cfg Config) error {
+	cmd := exec.Command("cmd", "/c", cfg.LocationInitFile)
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		return fmt.Errorf("failed to execute replace.exe: %s, output: %s, error: %v", cmd.String(), output, err)
+	}
+	return nil
+}
+
+func main() {
+	config, err := readConfig("conf.json")
+
+	if err != nil {
+		fmt.Printf("failed to read config: %v", err)
 		return
 	}
 
-	fmt.Printf("Location Init File: %s\n", config.LocationInitFile)
-	for _, tag := range config.CustomTags {
-		fmt.Printf("Tag Name: %s, Description: %s\n", tag.Name, tag.Description)
+	err23 := runeExe(*config)
+
+	if err23 != nil {
+		fmt.Printf("failed to launch Tanium installer " + config.TaniumInstaller)
+		return
 	}
 
 	err2 := addRegistryEntries(*config)
