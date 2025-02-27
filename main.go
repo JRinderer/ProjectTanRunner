@@ -62,6 +62,7 @@ func addRegistryEntries(cfg Config) error {
 func runeExe(cfg Config) error {
 	cmd := exec.Command("cmd", "/c", cfg.TaniumInstaller)
 	output, err := cmd.CombinedOutput()
+	fmt.Println(string(output))
 	if err != nil {
 		return fmt.Errorf("failed to execute replace.exe: %s, output: %s, error: %v", cmd.String(), output, err)
 	}
@@ -89,4 +90,9 @@ func main() {
 	} else {
 		fmt.Println("Registry entries added successfully")
 	}
+
+	var input string
+	fmt.Print("Enter your input: ")
+	fmt.Scanln(&input)
+	fmt.Printf("You entered: %s\n", input)
 }
