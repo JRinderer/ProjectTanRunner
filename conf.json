@@ -1,0 +1,17 @@
+{
+  "custom_tags": [
+    {
+      "name": "John_Rinderer_Non_Domain_Joined",
+      "description": "This is a test of a custom installer for tanium"
+    },
+    {
+      "name": "John_Rinderer_Non_Corporate",
+      "description": "This is a test of a custom installer for tanium"
+    },
+    {
+      "name": "John_Rinderer_TestPortCo",
+      "description": "This is a test of a custom installer for tanium"
+    }
+  ],
+  "location_init_file": "C:\\Program Files\\Tanium\\Tanium Client\\TaniumClient.ini"
+}
